@@ -72,18 +72,14 @@
     </div>
 
     <!-- Results Section -->
-    <div v-if="result" class="bg-white rounded-lg shadow-lg p-6">
-      <h3 class="text-xl font-semibold text-gray-800 mb-4">Results</h3>
-      <div class="bg-gray-50 rounded-lg p-4 overflow-auto max-h-[500px]">
-        <pre class="text-sm text-gray-700">{{ JSON.stringify(result, null, 2) }}</pre>
-      </div>
-    </div>
+    <TextractResult v-if="result" :result="result" />
   </div>
 </template>
 
 <script setup>
 import { ref } from 'vue'
 import { TextractClient, AnalyzeDocumentCommand } from '@aws-sdk/client-textract'
+import TextractResult from './TextractResult.vue'
 
 const config = useRuntimeConfig()
 const selectedFile = ref(null)
