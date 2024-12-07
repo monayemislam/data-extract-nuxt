@@ -8,5 +8,13 @@ export default defineNuxtConfig({
       awsAccessKeyId: process.env.AWS_ACCESS_KEY_ID,
       awsSecretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
     }
-  }
+  },
+  modules: ['@nuxtjs/tailwindcss'],
+  css: ['~/assets/css/main.css'],
+  postcss: {
+    plugins: {
+      tailwindcss: {},
+      autoprefixer: {},
+    },
+  },
 })

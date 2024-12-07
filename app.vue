@@ -1,6 +1,5 @@
 <template>
-  <div>
-    <h1>PDF OCR with AWS Textract</h1>
+  <div class="min-h-screen bg-gray-100 py-12">
     <PdfUploader />
   </div>
 </template>
