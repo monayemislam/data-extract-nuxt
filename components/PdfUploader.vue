@@ -1,8 +1,17 @@
 <template>
   <div class="max-w-4xl mx-auto p-6">
+    <!-- Header with Logo -->
     <div class="mb-8 text-center">
-      <h2 class="text-3xl font-bold text-gray-800 mb-2">PDF OCR Processing</h2>
-      <p class="text-gray-600">Upload your PDF document for text extraction using AWS Textract</p>
+        <div class="flex items-center justify-center mb-4">
+       
+       <img src="https://img1.wsimg.com/isteam/ip/ec854d99-43e6-4b7e-8e0a-4292c07646cb/Best%20Logo.jpg" alt="Troy and Banks" class="h-16">
+     </div>
+      <div class="flex items-center justify-center mb-4">
+       
+        <h2 class="text-3xl font-bold text-gray-800">Document Scanning App</h2>
+      </div>
+
+      <p class="text-gray-600">Upload your PDF document for text extraction</p>
     </div>
 
     <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
@@ -73,13 +82,31 @@
 
     <!-- Results Section -->
     <TextractResult v-if="result" :result="result" />
+
+    <!-- Footer -->
+    <footer class="mt-12 pt-8 border-t border-gray-200">
+      <div class="text-center">
+        <div class="flex items-center justify-center mb-4">
+          <a href="https://obitodigital.com" 
+             target="_blank" 
+             rel="noopener noreferrer"
+             class="text-gray-600 hover:text-blue-600 transition-colors">
+            <img src="https://obitodigital.com/wp-content/uploads/2024/02/Obito-Digital.png" alt="Obito Digital" class="h-8">
+          </a>
+        </div>
+        <div class="text-sm text-gray-500">
+        
+          <p class="mt-1">&copy; {{ new Date().getFullYear() }} Obito Digital. All rights reserved.</p>
+        </div>
+      </div>
+    </footer>
   </div>
 </template>
 
 <script setup>
 import { ref } from 'vue'
 import { TextractClient, AnalyzeDocumentCommand } from '@aws-sdk/client-textract'
-import TextractResult from './TextractResult.vue'
+
 
 const config = useRuntimeConfig()
 const selectedFile = ref(null)
