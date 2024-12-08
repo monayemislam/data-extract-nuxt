@@ -21,6 +21,43 @@
       </nav>
     </div>
 
+    <!-- Sentiment Analysis Tab -->
+    <div v-if="activeTab === 'sentiment'" class="space-y-6">
+      <div v-if="sentimentResult" class="bg-white p-6 rounded-lg border">
+        <div class="mb-4">
+          <h4 class="text-lg font-semibold mb-2">Overall Sentiment</h4>
+          <div class="flex items-center space-x-4">
+            <span 
+              class="px-3 py-1 rounded-full text-sm font-medium"
+              :class="getSentimentColor(sentimentResult.Sentiment)"
+            >
+              {{ sentimentResult.Sentiment }}
+            </span>
+            <span class="text-gray-600">
+              Confidence: {{ Math.round(getSentimentScore(sentimentResult) * 100) }}%
+            </span>
+          </div>
+        </div>
+        
+        <div class="space-y-3">
+          <h4 class="text-lg font-semibold">Sentiment Scores</h4>
+          <div class="grid grid-cols-2 gap-4">
+            <div v-for="(score, type) in sentimentResult.SentimentScore" 
+                 :key="type" 
+                 class="bg-gray-50 p-4 rounded-lg">
+              <div class="text-sm font-medium text-gray-600">{{ type }}</div>
+              <div class="text-lg font-semibold">
+                {{ Math.round(score * 100) }}%
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div v-else class="text-center text-gray-500 py-8">
+        Analyzing sentiment...
+      </div>
+    </div>
+
     <!-- Raw JSON Tab -->
     <div v-if="activeTab === 'raw'" class="bg-gray-50 rounded-lg p-4 overflow-auto max-h-[500px]">
       <pre class="text-sm text-gray-700">{{ JSON.stringify(result, null, 2) }}</pre>
@@ -73,8 +110,10 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
+import { analyzeSentiment } from '../utils/comprehendService'
 
+const config = useRuntimeConfig()
 const props = defineProps({
   result: {
     type: Object,
@@ -83,10 +122,12 @@ const props = defineProps({
 })
 
 const activeTab = ref('text')
+const sentimentResult = ref(null)
 const tabs = [
   { id: 'text', name: 'Extracted Text' },
   { id: 'tables', name: 'Tables' },
   { id: 'forms', name: 'Form Fields' },
+  { id: 'sentiment', name: 'Sentiment Analysis' },
   { id: 'raw', name: 'Raw JSON' }
 ]
 
@@ -168,4 +209,42 @@ const extractedForms = computed(() => {
   
   return forms
 })
+
+// Get the combined text for sentiment analysis
+const combinedText = computed(() => {
+  return extractedText.value.join(' ')
+})
+
+// Watch for changes in the extracted text and analyze sentiment
+watch(combinedText, async (newText) => {
+  if (newText) {
+    try {
+      sentimentResult.value = await analyzeSentiment(newText, config)
+    } catch (error) {
+      console.error('Error analyzing sentiment:', error)
+    }
+  }
+}, { immediate: true })
+
+// Helper functions for sentiment display
+const getSentimentColor = (sentiment) => {
+  const colors = {
+    POSITIVE: 'bg-green-100 text-green-800',
+    NEGATIVE: 'bg-red-100 text-red-800',
+    NEUTRAL: 'bg-gray-100 text-gray-800',
+    MIXED: 'bg-yellow-100 text-yellow-800'
+  }
+  return colors[sentiment] || colors.NEUTRAL
+}
+
+const getSentimentScore = (result) => {
+  if (!result?.SentimentScore) return 0
+  const scores = {
+    POSITIVE: result.SentimentScore.Positive,
+    NEGATIVE: result.SentimentScore.Negative,
+    NEUTRAL: result.SentimentScore.Neutral,
+    MIXED: result.SentimentScore.Mixed
+  }
+  return scores[result.Sentiment] || 0
+}
 </script> 

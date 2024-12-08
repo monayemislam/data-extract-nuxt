@@ -10,6 +10,7 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
+    "@aws-sdk/client-comprehend": "^3.699.0",
     "@aws-sdk/client-textract": "^3.699.0",
     "nuxt": "^3.14.1592",
     "vue": "latest",
