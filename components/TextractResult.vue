@@ -21,6 +21,53 @@
       </nav>
     </div>
 
+    <!-- Chat/Q&A Tab -->
+    <div v-if="activeTab === 'chat'" class="space-y-4">
+      <!-- Messages Display -->
+      <div class="bg-gray-50 rounded-lg p-4 h-80 overflow-y-auto space-y-4">
+        <div v-for="(message, index) in messages" :key="index"
+             :class="[
+               'p-4 rounded-lg max-w-[80%]',
+               message.type === 'user' 
+                 ? 'bg-blue-100 ml-auto' 
+                 : 'bg-white border'
+             ]"
+        >
+          <p class="text-sm" :class="message.type === 'user' ? 'text-blue-800' : 'text-gray-800'">
+            {{ message.text }}
+          </p>
+          <p v-if="message.confidence" class="text-xs text-gray-500 mt-1">
+            Confidence: {{ Math.round(message.confidence * 100) }}%
+          </p>
+        </div>
+      </div>
+
+      <!-- Input Area -->
+      <div class="flex space-x-3">
+        <textarea
+          v-model="userQuestion"
+          @keyup.enter.exact="handleQuestion"
+          placeholder="Ask a question about your document..."
+          class="flex-1 p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          rows="2"
+        ></textarea>
+        <button
+          @click="handleQuestion"
+          :disabled="!userQuestion.trim() || isProcessing"
+          class="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium
+                 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                 disabled:opacity-50 disabled:cursor-not-allowed
+                 transition duration-150 ease-in-out"
+        >
+          <span v-if="!isProcessing">Ask</span>
+          <svg v-else class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+
     <!-- Sentiment Analysis Tab -->
     <div v-if="activeTab === 'sentiment'" class="space-y-6">
       <div v-if="sentimentResult" class="bg-white p-6 rounded-lg border">
@@ -111,7 +158,8 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { analyzeSentiment } from '../utils/comprehendService'
+import { analyzeSentiment, analyzeText } from '../utils/comprehendService'
+import DocumentQA from './DocumentQA.vue'
 
 const config = useRuntimeConfig()
 const props = defineProps({
@@ -122,12 +170,21 @@ const props = defineProps({
 })
 
 const activeTab = ref('text')
+const userQuestion = ref('')
+const isProcessing = ref(false)
+const messages = ref([
+  {
+    type: 'system',
+    text: 'Hello! I can help you understand your document. What would you like to know?'
+  }
+])
 const sentimentResult = ref(null)
 const tabs = [
   { id: 'text', name: 'Extracted Text' },
   { id: 'tables', name: 'Tables' },
   { id: 'forms', name: 'Form Fields' },
   { id: 'sentiment', name: 'Sentiment Analysis' },
+  { id: 'chat', name: 'Chat' },
   { id: 'raw', name: 'Raw JSON' }
 ]
 
@@ -246,5 +303,27 @@ const getSentimentScore = (result) => {
     MIXED: result.SentimentScore.Mixed
   }
   return scores[result.Sentiment] || 0
+}
+
+const handleQuestion = async () => {
+  if (!userQuestion.value.trim() || isProcessing.value) return
+
+  const question = userQuestion.value.trim()
+  messages.value.push({ type: 'user', text: question })
+  userQuestion.value = ''
+  isProcessing.value = true
+
+  try {
+    const response = await analyzeText(question, extractedText.value.join(' '))
+    messages.value.push({
+      type: 'system',
+      text: response.answer,
+      confidence: response.confidence
+    })
+  } catch (error) {
+    console.error('Error analyzing text:', error)
+  } finally {
+    isProcessing.value = false
+  }
 }
 </script> 
