@@ -53,7 +53,7 @@
 
 <script setup>
 import { ref } from 'vue'
-import { analyzeText } from '../utils/comprehendService'
+import { analyzeWithOpenAI } from '../utils/openaiService'
 
 const props = defineProps({
   extractedText: {
@@ -71,6 +71,8 @@ const messages = ref([
   }
 ])
 
+const config = useRuntimeConfig()
+
 const handleQuestion = async () => {
   if (!userQuestion.value.trim() || isProcessing.value) return
 
@@ -80,7 +82,7 @@ const handleQuestion = async () => {
   isProcessing.value = true
 
   try {
-    const response = await analyzeText(question, props.extractedText.join(' '))
+    const response = await analyzeWithOpenAI(question, props.extractedText.join(' '), config)
     messages.value.push({
       type: 'system',
       text: response.answer,
