@@ -158,8 +158,8 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { analyzeSentiment, analyzeText } from '../utils/comprehendService'
-import DocumentQA from './DocumentQA.vue'
+import { analyzeSentiment } from '../utils/comprehendService'
+import { analyzeWithOpenAI } from '../utils/openaiService'
 
 const config = useRuntimeConfig()
 const props = defineProps({
@@ -314,14 +314,24 @@ const handleQuestion = async () => {
   isProcessing.value = true
 
   try {
-    const response = await analyzeText(question, extractedText.value.join(' '))
+    console.log('Config check:', {
+      hasOpenAIKey: !!config?.public?.openaiApiKey,
+      hasExtractedText: !!extractedText.value?.length
+    })
+
+    const response = await analyzeWithOpenAI(question, extractedText.value.join(' '), config)
     messages.value.push({
       type: 'system',
       text: response.answer,
       confidence: response.confidence
     })
   } catch (error) {
-    console.error('Error analyzing text:', error)
+    console.error('Chat Error:', error)
+    messages.value.push({
+      type: 'system',
+      text: `Error: ${error.message || 'An unexpected error occurred'}`,
+      error: true
+    })
   } finally {
     isProcessing.value = false
   }
